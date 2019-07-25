@@ -1,0 +1,39 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*HTTP Request Handlers*
+
+== Author
+
+TODO
+
+== Status
+
+TODO
+
+== Table of contents
+
+toc::[]
+
+== Abstract
+
+This SRFI defines a very simple abstraction for HTTP request handlers.
+A handler is a procedure that takes one HTTP request and returns one
+HTTP response. Handlers can be easily stacked on top of one another.
+Middleware handlers can be packaged as reusable Scheme libraries.
+
+The abstraction is a deliberate imitation of Clojure's Ring, Common
+Lisp's Clack, Ruby's Rack, Python's WSGI and Go's net/http which have
+proven themselves extremely successful in terms of both popularity and
+code clarity. It's also a great fit for Scheme.
+
+The abstraction is designed for HTTP/1.1 which is a synchronous
+protocol. It can be adapted to new asynchronous protocols such as
+HTTP/2 but forces them to operate in synchronous mode. Truly
+asynchronous request handlers are much more complex to specify and to
+use than synchronous ones so they are deferred to a future SRFI.
+
+== Rationale
