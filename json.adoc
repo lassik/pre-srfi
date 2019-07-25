@@ -35,6 +35,7 @@ Procedures to read and write JSON using this mapping are included.
 |Chicken cjson|alist|vector|string|#t|#f|'null
 |Chicken json|avector or hashtable|list|string or symbol|#t|#f|void
 |Chicken medea|alist|vector|string|#t|#f|'null
+|Gauche rfc.json|alist|vector|string|'true|'false|'null
 |guenchi json|alist|vector|string|#t or 'true|#f or 'false|'null or '()
 |guile-json|alist|vector|string|#t|#f|#nil
 |guile-sjson|('@ . alist) or hashtable|list|string|#t|#f|'null (was #nil)
