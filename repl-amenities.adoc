@@ -1,0 +1,339 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*REPL amenities*
+
+== Author
+
+Lassi Kortela
+
+== Status
+
+Draft
+
+== Table of contents
+
+toc::[]
+
+== Abstract
+
+This SRFI defines some basic amenities that are useful when working in
+a Scheme REPL: how to access documentation and other help; browse
+command history; exit nested REPLs; call the single-stepping, tracing
+and profiling facilities; study memory use; and access the source or
+compiled code for definitions. They are largely borrowed from Common
+Lisp.
+
+== Rationale
+
+Common Lisp specifies a number of functions meant mainly for
+interactive use at the _read-eval-print loop_ (REPL). Some Scheme
+implementations such as Chez Scheme have adopted some of them. This
+SRFI specifies a full set in the hopes of wider adoption. Aligning
+with Common Lisp makes sense because the users of both languages have
+similar needs for REPL work. People who use both languages will also
+have an easier time if procedures have the same names and semantics.
+
+Common Lisp's *describe* and *inspect* were left out of this SRFI
+because they are similar to `help` and their names are somewhat
+confusing. CL's *describe* is also extensible via the Common Lisp
+Object System (CLOS). Scheme does not come standard with such a
+system, making a separate question of the extensibility of *describe*.
+
+== Specification
+
+=== Version banner
+
+Before entering the top-level REPL, the Scheme implementation shall
+display a one-line banner starting with its name and version number.
+The banner may also display other information, possibly on subsequent
+lines. The banner may use color codes and other text attributes if it
+detects that the REPL is connected to a terminal.
+
+If the REPL is started with a _quiet_ flag, the banner does not need
+to be displayed.
+
+=== Line editing
+
+If the REPL can detect that it is running in a terminal, it enables
+line editing with history, parenthesis matching and and at least the
+following keyboard shortcuts:
+
+* Control+A - move cursor to beginning of line
+* Control+B - or left arrow - move cursor one character left
+* Control+E - move cursor to end of line
+* Control+F - or right arrow - move cursor one character right
+* Control+L - clear screen
+* Control+N or down arrow - next history entry
+* Control+P or up arrow - previous history entry
+* Escape+B - move cursor one word backward
+* Escape+F - move cursor one word forward
+
+If the line editor supports configuration, the user or sysadmin may
+have configured different keys (e.g. *vi* keybindings). The line
+editor does not need to follow the above requirements if it has been
+configured to do otherwise.
+
+=== Prompt indicator
+
+A nested REPL shall have a prompt indicator that displays the nesting
+level.
+
+A prompt that does not accept Scheme expressions (e.g. a debugger or
+inspector prompt) shall have a prompt indicator different from a
+Scheme REPL.
+
+=== One-letter definitions
+
+The default interaction environment shall not define any one-letter
+identifiers. Those are reserved for users.
+
+=== Last REPL expressions
+
+Each form successfully read in by the REPL is preserved for a limited
+time in a _history entry_. The entry stores the form as well as any
+values that were produced by evaluating the form. It may also store
+other information not specified in this SRFI. When a form is
+successfully read but not successfully evaluated, no values are stored
+in the history entry.
+
+```
+(history-form [<x>])
+(history-value [<x>])
+(history-values [<x>])
+```
+
+These procedures get information from a history entry. `history-form`
+gets the form read in, `history-value` gets the primary value (or `#f`
+if there were no values), and `history-values` gets the full list of
+all values (empty list if there were no values).
+
+A simple representation for a history entry is a `(form . values)`
+pair. Then *history-form* gets the `car`, *history-value* gets the
+`cadr`, and *history-values* gets the `cdr`.
+
+When a history entry is given as the argument, these procedures get
+information from that entry. For a nonnegative exact integer argument
+_n_ they use the _n_'th latest history entry where `0` is the latest
+one, `1` is the one before that, etc. No argument or `#f` is the same
+as `0`.
+
+`(history [n])`
+
+This procedure returns a list of the last _n_ history entries
+successfully read by the REPL. If there are fewer than _n_ entries in
+the history, it returns as many as there are. If _n_ is omitted
+or `#f`, the default is 10.
+
+It is undefined whether mutating the list mutates the history itself.
+It is undefined whether or not histories from prior REPL sessions are
+concatenated into the history of the current session. It is undefined
+whether nested or parallel REPLs use a shared history or separate
+histories. The implementation is free to throw out old entries from
+the history once it gets too big.
+
+=== Exiting the REPL
+
+`(exit)`
+
+With no arguments, exits the Scheme implementation. If typed in a
+nested REPL, exits all nested REPLs including the top-level REPL. May
+or may not require confirmation before exiting. The details of exiting
+are unspecified in this SRFI.
+
+Behavior with arguments is undefined by this SRFI.
+
+`(top-level)`
+
+With no arguments, exits and any all nested REPLs, returning to the
+top-level REPL. If the implementation supports more than one
+concurrent stack of nested REPLs, returns to the top of the current
+stack, leaving other stacks intact.
+
+Behavior with arguments is undefined by this SRFI.
+
+Patterned after Emacs Lisp.
+
+=== Bug reports
+
+`(bug-report)`
+
+Displays information that is likely to be useful to copy and paste
+into a bug report. The implementor knows best what is useful but
+likely candidates are operating system and library versions, hardware
+architecture as well as run-time and build-time configuration options.
+
+The display should also say where and how to send the bug report.
+Giving the URL of a web page containing detailed instructions is
+probably the best alternative at the time of writing. The traditional
+Unix workflow of opening a text editor to write an email is no longer
+preferred by most users, and the `mail` command is often not properly
+configured.
+
+The *bug-report* command should not automatically send any information
+over the network without the user's consent.
+
+The *bug-report* command may take optional arguments that are not
+specified in this SRFI.
+
+=== Opening an editor
+
+`(ed [x [library]])`
+
+Opens an interactive editor.
+
+If _x_ is missing of `#f`, opens the editor. If the editor is in the
+background, brings it to the foreground in its current state. If it is
+not running, starts it up and brings it to the foreground.
+
+If _x_ is a string (or a pathname, in Scheme implementations that have
+pathname objects), opens that file in the editor. Other open files may
+be closed (asking to save them first) or may remain open concurrently.
+
+If _x_ a symbol, edits the definition of that identifier if possible.
+One approach is to open the right source file (at the line number of
+the definition if possible).
+
+On Unix, this is typically the text editor denoted by the `EDITOR`
+environment variable, but it doesn't need to come from that variable,
+and can even be a structural editor instead of a text editor. The
+implementation may also opt to use a built-in editor if it has one
+instead of an external editing program. The implementation is free to
+use different editors for different types of files or objects, perhaps
+selectively using the Unix `open` command for some file types. The
+implementation may provide build-time and/or run-time configuration
+options to set which editor is used and with what options. On Unix, it
+is suggested that the implementation have a `set-environment-variable`
+procedure and text editor is configured by setting `EDITOR`, but this
+is not mandatory.
+
+Patterned after Common Lisp.
+
+=== Import libraries
+
+`(imports)` -- returns a list of all library names imported into the
+current interaction environment.
+
+`(reimport <import-spec>)` -- if nothing in import-spec has been
+imported, acts the same as *import*. But any libraries that have
+already been imported, are re-imported. So any edits to source files
+are reflected in the compiled code.
+
+=== Online help
+
+```
+(help)
+(help thing)
+(help thing kind)
+```
+
+_kind_ = syntax | procedure | variable | record | library | topic | feature | extension
+
+Display online help about a particular thing.
+
+With no arguments, displays a general help screen about how to find
+more help and how to get out of situations that confuse newbies, e.g.:
+
+* The URL for the implementation's website.
+* The URL for the user's manual or documentation index.
+* Quick guide on how to get more detailed help in the REPL.
+* How to load source code.
+* If there is a debugger, how to enter and exit it.
+* How to exit Scheme.
+
+With one argument, if the object is not a symbol or string, display
+help about that object.
+
+With one argument, if the object is a symbol or a string, use it as an
+identifier and display help about the definition of that identifier in
+the current interaction environment. If there is more than one kind of
+definition, do not show help about any of them; instead, list them
+all.
+
+With two arguments, if the object is a symbol or a string, use it as
+an identifier.
+
+Help can be displayed in different languages.
+
+`(documentation ...)` -- An alias for `help` to match Common Lisp.
+Takes the same arguments as `help` with the same behavior.
+
+```
+(apropos      string [library])
+(apropos-list string [library])
+```
+
+These procedures search for things whose names contain _string_. A
+case-insensitive substring match is used.
+
+These procedures are patterned after the Common Lisp functions with
+the same names. Emacs Lisp also has apropos commands.
+
+==== Debugging tools
+
+`(room [options])`
+
+Display information about memory used by the Scheme implementation.
+
+`(gc)`
+
+If the Scheme implementation has a garbage collector that can be run
+at will, this procedure runs it. Can optionally take arguments; then
+the behavior is not defined in this specification.
+
+`(time form) => result*`
+
+Evaluates _form_ and prints how much time it took.
+
+Patterned after Common Lisp and Chez Scheme.
+
+`(step form)`
+
+Runs an interactive single-stepper through the evaluation of form.
+
+Patterned after Common Lisp.
+
+`(trace)`
+
+With no arguments, this procedure prints a list of symbols naming the
+procedures that are currently being traced. If the implementation does
+not support tracing then the list is always empty.
+
+With one or more arguments, make sure tracing is enabled for all of
+those procedures. If one or more of them do not name procedures, an
+error is raised and the trace set is not modified. If the
+implementation does not supports tracing, giving one or more arguments
+always raises an error.
+
+Patterned after Common Lisp and Chez Scheme.
+
+`(untrace)`
+
+With no arguments, untraces any and all currently traced procedures.
+
+With one or more arguments, makes sure none of those procedures are
+traced. If non-existent procedures are named, ignore them and silently
+succeed.
+
+Returns the list of those arguments that were traced but no longer
+are.
+
+Patterned after Common Lisp and Chez Scheme.
+
+`(profile form) => result*`
+
+A profiler - a more sophisticated timer that breaks down the runtime
+per each sub-procedure. The code will have to be instrumented, which
+will make it run slower, but the profile is often tremendously useful.
+
+`(disassemble proc)`
+
+If _proc_ is a compiled procedure, displays the bytecode or machine
+code for it on current-output-port. Can also display other information
+about the procedure. _proc_ can be a procedure object or a symbol
+naming a procedure.
+
+Patterned after Common Lisp.
