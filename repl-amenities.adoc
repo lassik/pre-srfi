@@ -93,18 +93,22 @@ identifiers. Those are reserved for users.
 
 === Last REPL expressions
 
-Each form successfully read in by the REPL is preserved for a limited
-time in a _history entry_. The entry stores the form as well as any
-values that were produced by evaluating the form. It may also store
-other information not specified in this SRFI. When a form is
-successfully read but not successfully evaluated, no values are stored
-in the history entry.
+Each form successfully read in by the REPL is preserved in a _history
+entry_. The entry stores the unevaluated form as well as any values
+that were produced by evaluating the form.
 
-```
-(history-form [<x>])
-(history-value [<x>])
-(history-values [<x>])
-```
+When a form is successfully read but not successfully evaluated, no
+values are stored in the history entry. If the exception object is
+available, the entry stores it. An entry may also store other
+information not specified in this SRFI.
+
+Procedure `(history-form [<x>])`
+
+Procedure `(history-value [<x>])`
+
+Procedure `(history-values [<x>])`
+
+Procedure `(history-exception [<x>])`
 
 These procedures get information from a history entry. `history-form`
 gets the form read in, `history-value` gets the primary value (or `#f`
