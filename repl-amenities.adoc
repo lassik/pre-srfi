@@ -221,11 +221,6 @@ Patterned after Common Lisp.
 `(imports)` -- returns a list of all library names imported into the
 current interaction environment.
 
-`(reimport <import-spec>)` -- if nothing in import-spec has been
-imported, acts the same as *import*. But any libraries that have
-already been imported, are re-imported. So any edits to source files
-are reflected in the compiled code.
-
 === Online help
 
 ```
