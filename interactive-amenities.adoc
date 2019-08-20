@@ -477,6 +477,12 @@ current interaction environment.
 
 Patterned after Common Lisp.
 
+== Implementation
+
+Due to the nature of the topic, the implementation is necessarily
+deeply implementation-dependent. A sample implementation is not
+provided since there are almost no portable aspects.
+
 == Acknowledgements
 
 John Cowan designed and specified the REPL building block procedures.
