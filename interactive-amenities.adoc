@@ -326,7 +326,7 @@ an identifier and display help about the definition of that identifier
 in the current interaction environment.
 
 With two arguments, the second argument is a symbol stating the _kind_
-of thing to get help with. The values of _kind_ specified in thie SRFI
+of thing to get help with. The values of _kind_ specified in this SRFI
 are `binding`, `library`, `record`, `feature` and `topic`. The
 implementation may optionally support as many other _kind_ values as
 is useful. `binding` is meant for variables, procedures and macros
@@ -394,7 +394,7 @@ that tailor what information is displayed and where.
 
 (*imports*) => list of library names
 
-Return a frest list of all library names imported into the current
+Return a fresh list of all library names imported into the current
 interaction environment. Mutating the list must not alter the current
 import set.
 
@@ -472,7 +472,7 @@ code implementing it. Typically both the raw hexadecimal code and a
 symbolic disassembly are shown side by side, but this is not
 mandatory. Can also display other information about the procedure.
 _proc_ can be a procedure object or a symbol naming a procedure; if it
-is a symbol then the correpsonding identifier is looked up in the
+is a symbol then the corresponding identifier is looked up in the
 current interaction environment.
 
 Patterned after Common Lisp.
