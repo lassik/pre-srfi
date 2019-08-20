@@ -481,7 +481,7 @@ Patterned after Common Lisp.
 
 John Cowan designed and specified the REPL building block procedures.
 He also provided valuable feedback which clarified the scope and
-organization of the present SRFI.
+organization of the SRFI.
 
 The Common Lisp standard provided a solid and time-tested foundation
 that lets us avoid re-inventing the wheel.
