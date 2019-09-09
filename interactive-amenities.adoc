@@ -14,10 +14,6 @@ Lassi Kortela
 
 Draft
 
-== Table of contents
-
-toc::[]
-
 == Abstract
 
 This SRFI defines some basic amenities that are useful when working
