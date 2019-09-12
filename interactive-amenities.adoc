@@ -157,9 +157,10 @@ letter followed only by decimal digits. Those are reserved for users.
 Each form successfully read in by the REPL is preserved in a _history
 entry_. The entry stores both the unevaluated form and any values that
 were produced by evaluating the form. When a form is successfully read
-but not successfully evaluated, no values are stored in that history
-entry. If the exception object is available, it is stored instead. An
-entry may additionally store implementation-defined information.
+but not successfully evaluated, a history entry is made but no values
+are stored in that entry. If the exception object is available, it is
+stored in the entry. An entry may additionally store
+implementation-defined information.
 
 (*history-form* [_x_]) => object +
 (*history-value* [_x_]) => object or `#f` +
