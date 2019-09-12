@@ -18,10 +18,10 @@ Draft
 
 This SRFI defines some basic amenities that are useful when working
 interactively with Scheme: how to access documentation and other help;
-browse command history; exit nested REPLs; call the single-stepping,
-tracing and profiling facilities; study memory use; and access the
-source or compiled code for definitions. Where possible the facilities
-are borrowed from Common Lisp.
+browse command history; exit nested REPLs; call the single-stepping
+and profiling facilities; study memory use; and access the source or
+compiled code for definitions. Where possible the facilities are
+borrowed from Common Lisp.
 
 == Rationale
 
@@ -402,16 +402,6 @@ fractional seconds. Return any values produced by the evaluation.
 It is undefined whether or not this works in a nested REPL.
 
 Patterned after Common Lisp.
-
-(*profile* _form_) => _result*_
-
-Evaluate _form_ and display a table breaking down what fraction of the
-run time was spent in each sub-procedure. Return any values produced
-by the evaluation. The implementation will typically have to
-instrument the code, which will make it run slower, but the profile is
-often a tremendously useful guide for code optimization.
-
-It is undefined whether or not this works in a nested REPL.
 
 (*step* _form_) => result*
 
