@@ -479,6 +479,33 @@ Due to the nature of the topic, the implementation is necessarily
 deeply system-dependent. A sample implementation is not provided since
 there are almost no portable aspects.
 
+[source,scheme]
+----
+(define history '())
+
+(define (history-push form values)
+  (set! history (cons (cons form values) history)))
+
+(define (history-get x proc)
+  (cond ((pair? x) (proc x))
+        ((eqv? #f x) (history-get 0 proc))
+        ((and (integer? x) (>= x 0) (< x (length history)))
+         (history-get (list-ref history x) proc))
+        (else #f)))
+
+(define (history-form (x #f))
+  (history-get x car))
+
+(define (history-value (x #f))
+  (history-get x cadr))
+
+(define (history-values (x #f))
+  (history-get x cdr))
+
+(define (history-exception (x #f))
+  #f)
+----
+
 == Acknowledgements
 
 John Cowan designed and specified the REPL building block procedures.
