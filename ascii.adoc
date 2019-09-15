@@ -273,8 +273,8 @@ is returned.
 
 (*ascii-downcase* _char_)
 
-If _char_ represents an ASCII character in the _lower-case_ class,
-returns the same letter from the _upper-case_ class. Else returns
+If _char_ represents an ASCII character in the _upper-case_ class,
+returns the same letter from the _lower-case_ class. Else returns
 _char_ unchanged.
 
 _char_ can be a fixnum or a character object; the same type of object
