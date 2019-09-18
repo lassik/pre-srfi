@@ -131,6 +131,73 @@ logical but not quite.
     #x5b..#x60  punctuation     #x61..#x7a  lower-case
     #x7b..#x7e  punctuation     #x7f        control
 
+=== Letter and number transformations
+
+Many letter and number tasks are naturally expressed by treating
+decimal digits and the Latin alphabet as integer ranges. Recall that
+characters themselves are just integer codes under the hood.
+
+Hence by adding a (positive or negative) integer offset we can:
+
+* Map letters or digits to numeric values.
+* Map numeric values to letters or digits.
+* Map upper-case letters to lower-case letters.
+* Map lower-case letters to upper-case letters.
+* Map digits to letters.
+* Map letters to digits.
+
+Converting letters from upper-case to lower-case or vice versa is a
+simple matter of checking whether a letter is in the opposite case,
+and if so, offsetting it onto the case we want.
+
+Converting digits to numbers is a matter for checking that a character
+is in the ASCII digit range and then offsetting it to map the ACSII
+digits to the integers 0..9. Vice versa for numbers to ASCII digits.
+
+We can use only a part of the letter or digit span by specifying a
+limit. For example, to use the letters `abcdef` or `ABCDEF` for hex
+digits, we'd use a limit of 6 on the upper-case or lower-case range.
+
+For tasks that mix letters and digits, or upper-case and lower-case
+letters, it is advantageous to chain multiple transforms together.
+Each transform checks the source character to find out whether it
+matches. If it does, the transformation is performed. Otherwise the
+job is deferred to the next transformation. In the case of hex
+conversion, we'd first check whether a character matches the ASCII
+digit range, and if not, defer to a 6-limited letter range.
+
+To map letters to other letters, it is advantageous to treat the
+alphabet as a circular range that repeats infinitely in both
+directions. We can easily perform letter rotations by adding an
+arbitrary offset and taking the result modulo 26 (the count of letters
+in the alphabet).
+
+This SRFI wraps the above transforms into reusable combinators. They
+are specified in the _Transformation procedures_ section. Since there
+are countless minor variations on real-world transformation tasks such
+as number parsing, this SRFI doesn't provide any ready-made parsing
+procedures. Instead, the combinators have been designed with the goal
+of making it easy to roll your own parsers. The _Examples_ section
+will get you started.
+
+To recap the above, each transform:
+
+* selects a particular letter or digit range
+* limits that range
+* tests whether the source character matches the (limited) range
+* takes the character's position in the range and offsets it if it matched
+* defers to the next transform (if any) if the character did not match
+
+The combinators *ascii-upper-case-value* and *ascii-lower-case-value*
+each do all of the above jobs. The *ascii-digit-value* combinator does
+all of them except offsetting, since that is less useful for digits
+than letters.
+
+The combinators *ascii-nth-upper-case* and *ascii-nth-lower-case* do
+the opposite conversion from numeric values to characters, also
+handling alphabet rotations. The *ascii-nth-digit* combinator does not
+do rotations, since once again those are less useful on digits.
+
 == Specification
 
 === Character class constants
@@ -290,9 +357,7 @@ and number transformations.
 Returns a character object representing the _n_'th decimal digit in
 ASCII. _n_ counts from zero so that 0 returns `0` and 9 returns `9`.
 
-_n_ is a fixnum. It is taken modulo 10 so values less than 0 or
-greater than 9 are permitted. Use R^5^RS modulo (not remainder) when
-implementing the procedures in this SRFI.
+_n_ must be a fixnum in the range 0..9. If not, `#f` is returned.
 
 (*ascii-nth-upper-case* _n_)
 
@@ -359,7 +424,9 @@ character object.
 === Case conversion
 
 The case conversion procedures in this SRFI can be implemented in
-terms of the rotation procedures.
+terms of the letter transformation procedures. For the sake of
+simplicity, the following examples do not take number-to-character
+conversion into account.
 
 [source,scheme]
 ----
