@@ -603,7 +603,7 @@ Moriturus te saluto.
 (scheme-id foo-scheme)
 (canonical-command "foo-scheme")
 (languages scheme r6rs r7rs)
-(version 0.9.9_pre1)
+(version "0.9.9_pre1")
 (features utf-8 pthreads)
 (platform "aarch64_be-linux-gnu_ilp32")
 ```
@@ -614,7 +614,7 @@ It is parsed into the following S-expression:
 ((scheme-id foo-scheme)
  (canonical-command "foo-scheme")
  (languages scheme r6rs r7rs)
- (version 0.9.9_pre1)
+ (version "0.9.9_pre1")
  (features utf-8 pthreads)
  (platform "aarch64_be-linux-gnu_ilp32"))
 ```
@@ -623,7 +623,7 @@ When read into Scheme as `alist`, information can be extracted:
 
 * Which Scheme implementation is this: `(cadr (assoc 'scheme-id alist))`
 * Get the version: `(cadr (assoc 'version alist))`
-* Get the full feature list: `(assoc 'features alist)`
+* Get the full feature list: `(cdr (assoc 'features alist))`
 * Does it support R7RS? `(not (not (member 'r7rs (assoc 'languages alist))))`
 
 == Implementation
