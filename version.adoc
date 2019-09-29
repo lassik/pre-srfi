@@ -570,9 +570,9 @@ Examples:
 The computer architecture(s) and CPUs for which the executable was
 built. Symbols denote set membership.
 
-(*platform-bits* _symbol_...)
+(*platform-bits* _integer_...)
 
-_bits_ is a positive exact integer giving the address width of the
+_integer_ is a positive exact integer giving the address width of the
 host computer in bits; almost always 32 or 64.
 
 == Implementation-defined properties
