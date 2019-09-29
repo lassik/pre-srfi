@@ -1,0 +1,660 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*Version flag*
+
+== Author
+
+Lassi Kortela
+
+== Status
+
+Draft
+
+== Abstract
+
+This SRFI defines: 1) a standard command-line flag to get version
+information about a Scheme implementation; 2) a standard output format
+for the version information so it can be easily parsed by Scheme code
+or Unix tools; and 3) a standard vocabulary for the information, with
+room for extensions.
+
+== Table of contents
+
+toc::[]
+
+== Rationale
+
+=== Why a version flag
+
+A version flag is useful for:
+
+* Checking whether a particular Scheme implementation is installed.
+
+* Settling command name conflicts (e.g. `csc`, `gsc`, `scheme`).
+
+* Finding out configuration options without running Scheme code.
+
+* Getting a summary of a Scheme's configuration to write in a log.
+
+* Conforming to traditional Unix practice.
+
+A version flag often runs faster than starting a REPL or even running
+a script, since it doesn't have to load a large Scheme image. It is
+therefore ideal for running from build scripts and the like.
+
+=== Survey of existing version flags
+
+Existing Scheme implementations with an *upper-case* `-V` version flag:
+
+* Chibi (`chibi-scheme -V`)
+* Gauche (`gosh -V`)
+* Mosh (`mosh -V` and `nmosh -V`)
+* Racket (`racket -V`)
+* Vicare (`vicare -V`)
+
+Existing Scheme implementations with a conflicting use for
+*upper-case* `-V`:
+
+* (none known)
+
+Existing Scheme implementations with a *lower-case* `-v` version flag:
+
+* Cyclone (`cyclone -v` and `icyc -v`)
+* Guile (`guile -v`)
+* Mosh (`mosh -v` and `nmosh -v`)
+* Racket (`racket -v`)
+* Sagittarius (`sagittarius -v` and `sash -v`)
+
+Existing Scheme implementations with a conflicting use for
+*lower-case* `-v`:
+
+* Bigloo (`bigloo -v`) -- verbose
+* Chicken (`csc -v`) -- verbose
+* Vicare (`vicare -v`) -- verbose
+
+Other version flags in existing Scheme implementations:
+
+* `--version` with *two dashes* (Chez Scheme, Guile, Kawa, MIT Scheme,
+  Racket, Sagittarius, Vicare, Ypsilon)
+
+* `-version` with *one dash* (Bigloo, Chicken)
+
+* Version number only: `-vn` (Cyclone), `--version-only` (Vicare)
+
+Additionally, a few Schemes have flags to _change_ the version by
+loading another version of the same Scheme. Changing the version is
+not addressed by this SRFI.
+
+=== Which flag to choose
+
+http://www.catb.org/esr/writings/taoup/html/ch10s05.html#id2948149[_The
+Art of Unix Programming_, Chapter 10] has this to say about the
+*upper-case* `-V` flag:
+
+> `-V`: Version (without argument). Display program's version on
+  standard output and exit (often also prints compiled-in
+  configuration details as well). Examples: gcc(1), flex(1),
+  hostname(1), many others. It would be quite surprising for this
+  switch to be used in any other way.
+
+Since *upper-case* `-V` is the closest thing to a Unix standard
+single-letter version flag, and has no known conflicting purposes
+among Scheme implementations, this SRFI uses that flag. Other flags
+(e.g. *lower-case* `-v`, the word `-version` with one dash, and/or the
+word `--version` with two dashes) may be implemented as well, but are
+not required.
+
+=== Parseable output format
+
+Many Scheme/Lisp implementations and other Unix tools output version
+information in a format that is quite regular and stable. The hope is
+often that the information can be parsed from Scheme or Unix scripts.
+
+Often the output format is almost regular but not quite. Some of the
+more complex formats, while stable, are not self-consistent since they
+evolved over time from an ad-hoc syntax; `clisp --version` and `gcc
+-v` are examples.
+
+This SRFI displays the options in a very simple S-expression syntax
+that is a subset of Scheme's standard syntax, so implementations can
+easily write out the information using the standard `(write ...)`
+procedure as long as the expression is suitably constrained.
+
+The version output is naturally represented as an association list of
+properties and their values. Each association list entry shall be
+written as a separate S-expression; the full list is implicit.
+
+S-expressions are easy to access from Scheme but not from traditional
+Unix tools like `grep`. Hence we recommend implementations of this
+SRFI to start each property on a new line like this:
+
+```
+(property1 value1)
+(property2 value2)
+(property3 value3
+           more values for property3)
+```
+
+Then grep can be used like `grep -E '^\(property2 .*\)$'`.
+
+There may be a need to write such long values that the property does
+not fit easily on one line. The options are:
+
+* Use a very long line (not as easy for humans to read).
+
+* Use a multi-line value (like `property3` above; not as easy to grep).
+
+* Use multiple properties (not as easy to access from Scheme).
+
+=== Backward-compatibility
+
+To let implementations keep their existing version output, which may
+be needed for backward-compatibility, S-expression parsing starts at
+the first line with a left parenthesis `(` at the first column. This
+means that any amount of other text can come before the S-expression
+part. Some Unix programs write a multi-paragraph copyright, warranty
+and version message; all of that can be preserved if desired.
+
+This simple arrangement makes all of the following work naturally:
+
+* Only S-expression info: If the very first character in the output is
+  a `(` then the entire output is parsed as the association list.
+
+* No S-expression info: If no line starts with a `(` then the parser
+  simply returns an empty association list. This means that all known
+  Scheme implementations with an existing `-V` flag are already
+  compatible with this SRFI. It's just a matter of adding output, not
+  changing anything.
+
+* No info at all: If the output if completely blank, in that case the
+  parser also returns an empty association list.
+
+=== Why S-expression output
+
+The best argument for S-expressions generally is that people keep
+making less consistent and less flexible re-inventions of them for no
+objective reason. S-expressions are a time-tested solution to the
+age-old problem of how to represent heterogeneous hierarchical
+information in an extensible manner. Time and effort is saved by using
+this proven syntax from the beginning. Easy interoperability with
+Scheme/Lisp is a nice bonus.
+
+The main arguments against S-expressions is that they look foreign to
+non-Lisp programmers and require too many parentheses. The nesting
+implied by the parentheses makes them a poor fit for line-oriented
+tools. Unfortunately all the classic Unix text processing utilities
+are line-oriented, so we need a compromise. That compromise is to
+write each association list entry on its own line, leaving most lines
+with only one pair of surrounding parentheses. Nested lists in the
+output will be rare.
+
+We could take this even further by using implied parentheses around
+each line of text, so that no parentheses are needed for most output
+lines. This should make the output completely un-scary even for Unix
+programmers who know nothing about Lisp. Unfortunately this syntax
+would make it hard to provide backward-compatibility with the many
+existing output formats for version info. Having a left parenthesis in
+the first column is a very simple and unambiguous rule. If there are
+no such syntactic markers, parsing will be a lot harder. Most natural
+candidates for a syntactic marker are also more ambiguous than a left
+parenthesis. For example, `keyword: value` pairs are harder to detect
+and easier to confuse with other things. Continuation lines for long
+values would also be harder to do: we would need a special rule that
+lines starting with whitespace are continuation lines, and lookahead
+in the parser.
+
+== Specification
+
+=== Character set and encoding
+
+The version output should be in an ASCII superset character encoding,
+so that bytes `#x01..#x7e` correspond to those ASCII codepoints. The
+encoding of bytes outside this range is unspecified; UTF-8 is
+recommended where possible.
+
+ASCII space (`#x20`), carriage return (`#x0d`) and line feed (`#x0a`)
+characters are recognized as whitespace. Only line feed is recognized
+as a newline character. But since carriage return is whitespace, CR/LF
+newlines work as well as LF newlines.
+
+=== Simple S-expression subset
+
+The version output shall conform to the following subset of Scheme
+syntax:
+
+* Symbol: `foo` first char `[A-Za-z]` subsequent chars `[A-Za-z0-9_/+.-]`
+* String: `"string"` and backslash escapes
+* Integer: `123 123.45 -123 -123.45`
+* List: `() (a) (a b) (a b c)`
+
+Missing features:
+
+* `#t` and `#f` (due to interoperability concerns with other Lisps)
+* Vertical-bar symbols (use strings instead)
+* Improper lists (i.e. consing dot)
+* Vectors and bytevectors
+* Exponents, ratios, complex numbers
+* Comments
+
+It is recommended to work around the lack of booleans by using
+enumerations or sets. For example, instead of `(linux? #t)` we
+recommend `(platform-os linux)` or `(features ... linux ...)`.
+
+=== Version flag
+
+For an imaginary Scheme invoked as `foo-scheme`, the command line
+`foo-scheme -V` must conform to the version output format in this
+SRFI.
+
+If the Scheme supports GCC-style long options, then `foo-scheme
+-version` should have the same effect but this is not required.
+
+If the Scheme supports GNU-style long options, then `foo-scheme
+--version` should have the same effect but this is not required..
+
+This SRFI guarantees only that the above simple invocation, with `-V`
+as the first command-line argument and no other arguments, has the
+intended effect. The implementation should support the `-V` flag in
+other positions as well if it makes sense, but that is not required.
+
+The `-V` flag shall exit with the OS success exit code if the Scheme
+successfully retrieved at least some of the information, successfully
+wrote all that information to standard output and flushed its output
+buffer. Otherwise if exits with an OS failure exit code. On Unix and
+Windows, exit code 0 means success and codes 1..100 are safe for
+indicating failure.
+
+=== Effect of other flags on version output
+
+The `-V` output may change if other flags are also given on the
+command line. For example, `foo-scheme -V -r r6rs` and `foo-scheme -V
+-r r7rs` could give different output describing the R6RS and R7RS
+modes of Foo Scheme, and `foo-scheme -V` could give yet different
+output describing both of them or have less information.
+
+If the implementation has both an interpreter and a compiler, both of
+those should support the `-V` flag. The output may differ between
+them.
+
+=== Use of color and other display attributes
+
+ANSI, HTML or other in-band color and text attribute markup shall not
+be used in the S-expression part, since it will confuse parsers.
+
+Out-of-band color markup (e.g. Windows console API character
+attributes) may be used.
+
+=== Standard properties
+
+Below is a large set of proposed standard properties. This set was
+designed based on actual information currently reported by various
+Scheme implementations in their version output.
+
+All properties are optional.
+
+=== Standard identification properties
+
+(*canonical-command* _string..._)
+
+The command names for some Schemes differ on different operating
+systems and installations. Implementors typically desire a canonical
+command name for each command shipping with their implementation, but
+compromises sometimes need to be made due to name conflicts or
+multiple versions of the same command that need to be able to
+co-exist. This property gives the canonical name suggested by the
+implementor without any optional version number.
+
+If the executable being invoked is a multi-call binary (i.e. it can
+behave like more than one program depending on which argv[0] is given)
+or otherwise is known by more than one canonical name, then more than
+one string may be given.
+
+Examples:
+
+```
+(canonical-command "csi")
+(canonical-command "gsc")
+(canonical-command "isc")
+(canonical-command "scheme" "mit-scheme")
+```
+
+(*scheme-id* _symbol_)
+
+A symbol identifying which Scheme implementation provides this
+executable. Together with *canonical-command* this can be used to
+figure out which command of which implementation was invoked, even in
+cases where two implementations use the same command name.
+
+Examples:
+
+```
+(scheme-id foo-scheme)
+```
+
+(*languages* _symbol..._)
+
+The set of programming languages supported by the implementation.
+Symbols denote set membership.
+
+The distinctions between _language_, _language standard_, _language
+family_ and _dialect_ are muddy. For the purposes of this property,
+they are all equivalent, and any of them may be represented by a
+symbol in this property. For example, `r7rs` is a member of `scheme`
+and both should be given. Non-Scheme languages could also be listed.
+If a unified Scheme and Common Lisp implementation is ever made, it
+would list both languages.
+
+Pedantry about language definitions and guarantees about conformance
+are not the point of this property; the point is that the
+implementation aspires to conform to these languages to a useful
+degree, and if it does not, you can open issues in the issue tracker
+to discuss it. In particular, any executable usefully characterized as
+a Scheme implementation should list `scheme` even if it does not fully
+conform to any R^n^RS report.
+
+Standard symbols include `r3rs`, `r4rs`, `r5rs`, `r6rs`, `r7rs`,
+`r7rs-large`, `scheme`. Please coordinate with other implementors
+about coining symbols for other Scheme derivatives and non-Scheme
+languages.
+
+Examples:
+
+```
+(languages scheme r6rs r7rs)
+```
+
+(*website* _url_)
+
+A URL that starts with `http://` or `https://`.
+
+=== Standard version properties
+
+(*version* _string_)
+
+A free-form version string in the native format preferred by the
+implementor. No portable information can be reliably parsed from the
+string, but version strings should be sortable in order from oldest to
+newest using typical "version sort" algorithms.
+
+In practice, most Scheme implementations use release version numbers
+in _major.minor.patch_ format. Other information such as distributor
+patchlevel or version control commit may be appended.
+
+Examples:
+
+```
+(version "1.2.3")
+(version "1.11.6")
+(version "0.9.9_pre1")
+(version "1.0.188-a4a79d5")
+```
+
+(*release* _string_)
+
+The most recent released version of the implementation based on which
+this build was made. If this _is_ that release version, then *version*
+is identical to this. If this has patches on top, then the two
+versions are different.
+
+(*release-date* _string_)
+
+The `YYYY-MM-DD` date on which the release was made.
+
+Examples:
+
+```
+(release-date "2019-08-06")
+```
+
+(*release-codename* _string_)
+
+A codename for the release.
+
+Examples:
+
+```
+(release-codename "Grain Alcohol and Rainwater")
+(release-codename "oxygen")
+```
+
+(*revision* _string_)
+
+A free-form revision string that can be used to check out the version
+control commit on which this build is based. At the time of writing,
+this would most often be a Git tag or abbreviated commit hash.
+
+Not that the builder can have made uncommitted changes on top of the
+commit.
+
+Examples:
+
+```
+(revision "8e62f718")
+(revision "3.0-0-g39797ea94")
+```
+
+=== Standard runtime properties
+
+(*features* _symbol..._)
+
+The symbols should correspond to the feature list for *cond-expand*.
+
+Examples:
+
+```
+(features 64bit dload ptables)
+(features utf-8 pthreads linux r7rs)
+(features chibi r7rs ratios complex uvector threads full-unicode
+          modules dynamic-loading darwin bsd macosx little-endian)
+```
+
+=== Standard build properties
+
+(*configure* _argument_...)
+
+Command line arguments given to `./configure` script in the build
+directory. A configure script a very common means for build-time
+configuration of programs on Unix-like operating systems. It is useful
+to save the options given to that script for run time; it helps in
+replicating builds and debugging problems with the implementation if
+the options are known.
+
+Each argument is given as one string. Scheme string escapes are used;
+shell escapes are not. The name of the configure script is not given.
+It is almost always `configure`, though that is not required.
+
+Examples:
+
+```
+(configure "--enable-single-host" "--prefix=/home/waldo/.local" "CC=gcc-9")
+```
+
+(*platform* _string_)
+
+A free-form string identifying the computer architecture, operating
+system, and other things for which the executable was built. This is
+the platform string in the implementation's native format; there is no
+portable information that can be reliably parsed. Often this is a
+GNU-style `computer-kernel-userland` triple; just as often it is not.
+
+Examples:
+
+```
+(platform "DarwinX8664")
+(platform "x86_64-apple-darwin18.7.0")
+(platform "macosx-unix-clang-x86-64")
+```
+
+(*build-date* _iso-date_ [_iso-time_])
+
+The date, with optional time-of-day, when this executable was built.
+
+Should be UTC, not local time.
+
+* _iso-date_ is always a string in `YYYY-MM-DD` format.
+
+* _iso-time_ is always a string that starts with `HH:MM`. It may
+contain more stuff for extra precision, according to the ISO 8601 time
+format, but it's questionable whether a precision exceeding one minute
+is useful.
+
+Examples:
+
+```
+(build-date "2018-09-30")
+(build-date "2018-09-30" "02:07")
+(build-date "2018-09-30" "02:07:07.1234")
+```
+
+Unix `date` commands to generate timestamps in that format:
+
+* `date '+"%Y-%m-%d"'` (date only)
+* `date '+"%Y-%m-%d" "%H:%M"'` (date, minute and second)
+
+Grep patterns:
+
+* `grep -E '\(build-date ".*?"\)'`
+
+=== Standard boot image properties
+
+(*image-date* _iso-date_ [_iso-time_])
+
+If this is an image-based Scheme system, the date and time when the
+boot image was saved. Details as for *build-date*.
+
+This may vary by command line options and environment variables if
+those can be used to select a different boot image.
+
+(*image-file* _filename_)
+
+If the boot image is stored into a file separate from the executable,
+this gives the filename that is used to load that image.
+
+=== Standard pathname properties
+
+(*install-dir* _string_)
+
+Root directory of the Scheme installation, if it has one.
+
+(*library-path* _string..._)
+
+List of directories to search for imported libraries.
+
+=== Standard platform properties
+
+(*platform-os* _symbol_...)
+
+The operating system(s) for which the executable was built. Symbols
+denote set membership.
+
+Examples:
+
+```
+(platform-os aros amigaos)
+(platform-os dragonflybsd bsd unix)
+(platform-os freebsd bsd unix)
+(platform-os haiku beos)
+(platform-os linux unix)
+(platform-os netbsd bsd unix)
+(platform-os openbsd bsd unix)
+(platform-os solaris unix)
+(platform-os windows)
+```
+
+(*platform-computer* _symbol_...)
+
+The computer architecture(s) and CPUs for which the executable was
+built. Symbols denote set membership.
+
+(*platform-bits* _symbol_...)
+
+_bits_ is a positive exact integer giving the address width of the
+host computer in bits; almost always 32 or 64.
+
+== Implementation-defined properties
+
+The names of implementation-defined properties should start with the
+implementation's scheme-id and a dash. For example, if Foo Scheme
+builds varied by the phase of the moon, it could have:
+
+```
+(foo-scheme-phase-of-the-moon waxing-crescent)
+```
+
+== Complete example
+
+If `foo-scheme-1.2.3 -V` gives the following output:
+
+```
+Foo Scheme version 15.3
+Copyright (C) 2014 Foo Scheme Authors
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Image saved on Thursday August 29, 2019 at 9:22:03 PM
+  Release 9.2 || Microcode 15.3 || Runtime 15.7 || SF 4.41 || LIAR/C 4.118
+  Edwin 3.116
+Moriturus te saluto.
+
+(scheme-id foo-scheme)
+(canonical-command "foo-scheme")
+(languages scheme r6rs r7rs)
+(version 0.9.9_pre1)
+(features utf-8 pthreads)
+(platform "aarch64_be-linux-gnu_ilp32")
+```
+
+It is parsed into the following S-expression:
+
+```
+((scheme-id foo-scheme)
+ (canonical-command "foo-scheme")
+ (languages scheme r6rs r7rs)
+ (version 0.9.9_pre1)
+ (features utf-8 pthreads)
+ (platform "aarch64_be-linux-gnu_ilp32"))
+```
+
+When read into Scheme as `alist`, information can be extracted:
+
+* Which Scheme implementation is this: `(cadr (assoc 'scheme-id alist))`
+* Get the version: `(cadr (assoc 'version alist))`
+* Get the full feature list: `(assoc 'features alist)`
+* Does it support R7RS? `(not (not (member 'r7rs (assoc 'languages alist))))`
+
+== Implementation
+
+Here is a fully functional parser. *read-version-alist-from-command*
+is specific to Gambit and needs to be rewritten for other Schemes.
+
+[source,scheme]
+----
+(define (read-all in)
+  (let loop ((xs '()))
+    (let ((x (read in)))
+      (if (eof-object? x) (reverse xs) (loop (cons x xs))))))
+
+(define (skip-to-line-starting char in)
+  (let scan ((prev #\newline))
+    (let ((c (peek-char in)))
+      (unless (or (eof-object? c)
+                  (and (char=? #\newline prev) (char=? char c)))
+        (scan (read-char in))))))
+
+(define (read-version-alist in)
+  (skip-to-line-starting #\( in)
+  (read-all in))
+
+(define (read-version-alist-from-string string)
+  (call-with-port (open-input-string string) read-version-alist))
+
+(define (read-version-alist-from-command command)
+  (let* ((result (shell-command (string-append command " -V") #t))
+         (status (car result))
+         (output (cdr result)))
+    (read-version-alist-from-string (if (= status 0) output ""))))
+----
