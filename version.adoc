@@ -624,7 +624,7 @@ When read into Scheme as `alist`, information can be extracted:
 * Which Scheme implementation is this: `(cadr (assoc 'scheme-id alist))`
 * Get the version: `(cadr (assoc 'version alist))`
 * Get the full feature list: `(cdr (assoc 'features alist))`
-* Does it support R7RS? `(not (not (member 'r7rs (assoc 'languages alist))))`
+* Does it support R7RS? `(not (not (member 'r7rs (cdr (assoc 'languages alist)))))`
 
 == Implementation
 
