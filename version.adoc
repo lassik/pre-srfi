@@ -176,21 +176,20 @@ This simple arrangement makes all of the following work naturally:
 === Why S-expression output
 
 The best argument for S-expressions generally is that people keep
-making less consistent and less flexible re-inventions of them for no
-objective reason. S-expressions are a time-tested solution to the
-age-old problem of how to represent heterogeneous hierarchical
-information in an extensible manner. Time and effort is saved by using
-this proven syntax from the beginning. Easy interoperability with
-Scheme/Lisp is a nice bonus.
+re-inventing them in less consistent and flexible formats without an
+objective reason. We will save time and effort by using time-tested
+syntax from the beginning. Easy interoperability with Scheme/Lisp is
+nice as well.
 
 The main arguments against S-expressions is that they look foreign to
 non-Lisp programmers and require too many parentheses. The nesting
 implied by the parentheses makes them a poor fit for line-oriented
 tools. Unfortunately all the classic Unix text processing utilities
-are line-oriented, so we need a compromise. That compromise is to
-write each association list entry on its own line, leaving most lines
-with only one pair of surrounding parentheses. Nested lists in the
-output will be rare.
+are line-oriented, and the rest rely on regular expressions. To
+interoperate with these tools we need we need a compromise. The
+easiest compromise is to write each association list entry on its own
+line, which leaves most lines with only one pair parentheses and no
+nesting. Nested lists in the output will be rare.
 
 We could take this even further by using implied parentheses around
 each line of text, so that no parentheses are needed for most output
