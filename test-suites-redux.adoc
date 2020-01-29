@@ -1,0 +1,107 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*Test suites redux*
+
+== Author
+
+TODO
+
+== Status
+
+TODO
+
+== Table of contents
+
+toc::[]
+
+== Abstract
+
+This SRFI specifies a few extensions to the venerable SRFI 64 (A
+Scheme API for test suites).
+
+== Rationale
+
+TODO
+
+== Specification
+
+=== Tests clarified from SRFI 64
+
+These tests are intended to be identical to SRFI 64, but the
+specification explicitly addresses edge cases.
+
+Syntax (*test-assert* [_test-name_] _expr_)
+
+Test that _expr_ returns at least one value, and that the primary
+value is not `#f`.
+
+Syntax (*test-eq* [_test-name_] _expected-value_ _expr_) +
+Syntax (*test-eqv* [_test-name_] _expected-value_ _expr_) +
+Syntax (*test-equal* [_test-name_] _expected-value_ _expr_)
+
+Test that _expr_ returns exactly one value, and that value is *eq?* or
+*eqv?* or *equal?* to _expected-value_.
+
+=== Tests specialized from SRFI 64
+
+Syntax (*test-error* [_test-name_] _expected-error?_ _expr_)
+
+Test that _expr_ raises an exception and the error object satisfies
+the _expected-error?_ predicate.
+
+SRFI 64 specified an _error-type_ argument which was optional and had
+complex implementation-dependent meaning. This SRFI replaces it with a
+required argument which is only allowed to be a predicate. The SRFI 64
+specification is lenient enough that this SRFI's version is a
+compatible subset of the behavior accepted of SRFI 64 implementations.
+
+=== New tests
+
+Syntax (*test-tail-error* [_test-name_] _expected-error?_ _expr_)
+
+Like *test-error* but also checks that the exception was raised from
+tail position. If the underlying Scheme implementation cannot
+distinguish between tail and non-tail exceptions, *test-tail-error* is
+equivalent to *test-error*.
+
+Syntax (*test-satisfies* [_test-name_] _expected?_ _expr_) +
+Syntax (*test-satisfies-not* [_test-name_] _expected?_ _expr_)
+
+Test that (_expected?_ _expr_) returns at least one value and that the
+primary value is `#t` or `#f`, respectively.
+
+Syntax (*test-same-under* [_test-name_] _somehow-equal?_ _expected-value_ _expr_) +
+
+Test that (_somehow-equal?_ _expected-value_ _expr_) returns `#t`.
+_somehow-equal?_ should be commutative but this is not strictly
+required: the arguments _expected-value_ and _expr_ are guaranteed to
+be passed in that order.
+
+=== New helpers
+
+Procedure (*test-name* _part..._) -> _string_
+
+Return a string which is the concatenation of _parts_ delimited by
+`:`. A _part_ can be any object; its *display* representation is used.
+For example, `(test-name "foo" 1 #t)` returns `"foo:1:#t"`.
+
+Procedure (*arity-error?* _obj_) -> _boolean_
+
+Return `#t` if _obj_ is an error object representing an arity error.
+Else return `#f`. An arity error is what happens when a procedure call
+is attempted with one or more missing arguments, or one or more
+extraneous arguments.
+
+If the underlying Scheme implementation has one or more special
+exception types to represent arity errors, this predicate should test
+for those types. If not, it is acceptable to match the error message
+against known strings.
+
+In Scheme implementations supporting keyword arguments, *arity-error?*
+should return `#t` in case a required keyword argument is missing. It
+should also return `#t` in case an unknown keyword argument was given
+and the procedure does not accept unknown keywords.
