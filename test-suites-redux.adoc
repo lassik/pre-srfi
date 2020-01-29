@@ -59,6 +59,10 @@ required argument which is only allowed to be a predicate. The SRFI 64
 specification is lenient enough that this SRFI's version is a
 compatible subset of the behavior accepted of SRFI 64 implementations.
 
+If possible, the Scheme implementation should disable compiler
+warnings about incorrect arity, unreachable code and other such things
+in _expr_ since _expr_ is likely to be intentionally incorrect code.
+
 === New tests
 
 Syntax (*test-tail-error* [_test-name_] _expected-error?_ _expr_)
