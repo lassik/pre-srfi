@@ -89,9 +89,9 @@ be passed in that order.
 
 Procedure (*test-name* _part..._) -> _string_
 
-Return a string which is the concatenation of _parts_ delimited by
-`:`. A _part_ can be any object; its *display* representation is used.
-For example, `(test-name "foo" 1 #t)` returns `"foo:1:#t"`.
+Return a string which the concatenation of _parts_ delimited by
+spaces. A _part_ can be any object; its *display* representation is
+used. For example, `(test-name "foo" 1 #t)` returns `"foo:1:#t"`.
 
 Procedure (*arity-error?* _obj_) -> _boolean_
 
