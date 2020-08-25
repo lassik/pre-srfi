@@ -1,0 +1,113 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*Tagged integer types*
+
+== Author
+
+Lassi Kortela
+
+== Status
+
+Draft
+
+== Table of contents
+
+toc::[]
+
+== Abstract
+
+This SRFI lets programmers define new types that carry exact integer
+values fitting in an unboxed machine word.
+
+== Rationale
+
+== Specification
+
+=== Disjointness
+
+Every tagged integer type is disjoint from all other types.
+
+=== Honest implementation
+
+The implementation
+
+=== Fake implementation
+
+A record type can serve as a
+
+=== Type
+
+A tagged integer type.
+
+=== Procedures
+
+(*tagged-integer-width*) -> _natural_
+
+Similar to *fixnum-width* (R6RS) or *fx-width*, return how many bits
+are available to store unboxed tagged integer values. This is just the
+bits for value; this does not include the tag bits for defining which
+tagged integer type is in question; this also does not include any
+general tag bits to indicate that this is a tagged integer value.
+
+Values not fitting in this number of bits will be stored as fixnums.
+
+(*define-tagged-integer-type* _name_ _constructor_ _predicate_ [_display_])
+
+A procedure named _constructor_ is defined to make new values of this
+type. The values are generally immutable.
+
+A procedure named _predicate_ is defined to test whether any given
+object is of this type.
+
+If _display_ is given and not #f, it is a procedure that takes an
+exact integer and returns a string to serve as the printed
+representation.
+
+(*tagged-integer?* _obj_) -> _boolean_
+
+(*tagged-integer-tag* _tint_) -> _symbol_
+
+Return the type tag of _obj_, of #f if not a tagged integer.
+
+(*tagged-integer-ref* _tint_) -> _integer_
+
+Return the numeric value as a standard Scheme exact integer.
+
+== Examples
+
+-----
+> (define-tagged-integer-type HANDLE make-handle handle?)
+> (define h (make-handle #x1234))
+> h
+#<HANDLE #x1234>
+> (handle? h)
+#t
+> (tagged-integer-tag h)
+HANDLE
+> (tagged-integer-ref h)
+#x1234
+> (handle? #x1234)
+#f
+> (handle? (tagged-integer-ref h))
+#f
+> (handle? (make-handle #x1234))
+#t
+> (handle? (make-handle (tagged-integer-ref h)))
+#t
+> (exact-integer? h)
+#f
+> (exact-integer? #x1234)
+#t
+> (exact-integer? (tagged-integer-ref h))
+#t
+> (make-handle h)
+ERROR: not an exact integer
+-----
+
+-----
+> (define-tagged-integer-type timestamp make-timestamp timestamp?)
+-----

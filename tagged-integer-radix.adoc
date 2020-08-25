@@ -1,0 +1,112 @@
+= SRFI nnn
+:toc: macro
+:toc-title:
+
+== Title
+
+*Tagged integer radix*
+
+== Author
+
+Lassi Kortela
+
+== Status
+
+Draft
+
+== Table of contents
+
+toc::[]
+
+== Abstract
+
+This SRFI makes the input radix for integers sticky so that Scheme can
+later display the number in the same radix it was read in.
+
+== Rationale
+
+The Scheme reader can read integers in decimal, hexadecimal, binary,
+and octal. However, it traditionally converts each number into a
+binary representation and throws away the information about which
+radix the number was read in as soon as it has been read. On display,
+the number is then written out in decimal no matter which base it was
+read in. This is not convenient to humans.
+
+== Specification
+
+=== Reading and writing
+
+Every integer handled by the implementation carries information about
+which radix it uses.
+
+The Scheme reader (*read*, *string\->number* et.al.) sets this radix
+when it reads an integer.
+
+The Scheme printer (*display*, *write*, et.al.) honors the radix.
+
+*number\->string* is not affected by this SRFI; defaults to decimal.
+
+=== Storage
+
+A full-featured implementation of this SRFI distinguishes between all
+four of decimal, hexadecimal, binary, and octal. Since there are four
+choices, two tag bits in an unboxed word can make the distinction.
+
+A space-conscious implementation can distinguish only between decimal
+and hexadecimal integers. That's the minimal implementation of this
+SRFI. One tag bit is enough to make the distinction.
+
+An implementation can optionally distinguish radixes in numbers other
+than integers (e.g. ratios, real numbers). In every case, the entire
+number carries one particular radix. This same radix applies to all
+parts of the number (e.g. the numerator and denominator of a rational
+number, or each dimension of a complex/hypercomplex number). It's
+implementation-defined how the radix is decided at read time for
+multi-part numbers.
+
+If the binary radix is not distinguished, then integers read in as
+binary are marked as hexadecimal for further handling. If the octal
+radix is not distinguished, integers read in as octal are likewise
+marked as hexadecimal.
+
+An implementation can optionally distinguish radixes other than
+decimal, hexadecimal, binary, and octal. If an implementation can read
+in numbers using such radixes, but cannot distinguish between all of
+them after reading, then it is implementation-defined which radixes
+are converted to which others.
+
+=== Handling
+
+The result(s) of an arithmetic operation use the radix of the leftmost
+operand. For example, `(+ #xABC 123 #b1010)` returns `#xb41`.
+
+By the same rule, `(+ (* #o123 5) 123)` returns `#o1032`. The inner
+`\*` expression is evaluated first, and its first operand uses octal,
+so the result of `*` is also in octal. This inner result becomes the
+first operand to the outer `+`. Therefore the result from the `+` is
+also in octal. `(+ 123 (* #o123 5))` returns the decimal result `538`
+since the first operand to the outer `+` is now in decimal.
+
+=== Procedures
+
+(*radix* _r_ _n_) -> _n'_
+
+Return a copy of the number _n_ such that the copy uses radix _r_ and
+the original _n_ keeps its old radix.
+
+If the implementation cannot distinguish radix _r_ then it follows the
+radix conversion rules detailed in the _Storage_ section to pick
+another radix. If the implementation cannot store radix information at
+all for the given type of number then _n_ is returned as is.
+
+(*radix-ref* _n_) -> _r_
+
+Given any number _n_, return its radix as an exact integer: for
+example, decimal is 10. If radix information is not stored in this
+number, return 10 by default.
+
+=== Optimized storage and handling
+
+Optimized code sections, or code interfacing to external systems
+(foreign function interface) are permitted to use an integer
+representation that throws away information about the radix.
