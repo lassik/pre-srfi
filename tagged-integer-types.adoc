@@ -33,15 +33,15 @@ Every tagged integer type is disjoint from all other types.
 
 === Honest implementation
 
-The implementation
+The implementation should reserve a type tag for user-defined integer
+types. Within this type tag, the value space should be further
+partitioned so that _m_ bits are reserved to indicate which
+user-defined integer type is in question and the remaining _n_ bits
+carry the number's value.
 
 === Fake implementation
 
-A record type can serve as a
-
-=== Type
-
-A tagged integer type.
+A record type can serve as a makeshift implementation.
 
 === Procedures
 
@@ -53,7 +53,7 @@ bits for value; this does not include the tag bits for defining which
 tagged integer type is in question; this also does not include any
 general tag bits to indicate that this is a tagged integer value.
 
-Values not fitting in this number of bits will be stored as fixnums.
+Values not fitting in this number of bits will be stored as bignums.
 
 (*define-tagged-integer-type* _name_ _constructor_ _predicate_ [_display_])
 
